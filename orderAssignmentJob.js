@@ -1,34 +1,46 @@
-const cron = require('node-cron');
-const Order = require('./models/Order');
-const DeliveryPartner = require('./models/DeliveryPartner');
+const Order = require('../models/orderModel');
+const DeliveryPartner = require('../models/deliveryPartnerModel');
+const haversine = require('haversine-distance');
 
-// Define your cron job
-const assignmentJob = cron.schedule('* * * * *', async () => {
+const assignOrders = async () => {
   try {
-    const orders = await Order.find({ status: 'pending' }).populate('deliveryPartner');
-    const freeExecutives = await DeliveryPartner.find({ status: 'free' });
+    const orders = await Order.find({ status: 'unassigned' });
+    const partners = await DeliveryPartner.find({ status: 'free' });
 
-    // Logic to assign orders to free delivery executives
-    // Example: Assign each pending order to a free executive
-    orders.forEach(async (order) => {
-      if (freeExecutives.length > 0) {
-        const randomIndex = Math.floor(Math.random() * freeExecutives.length);
-        const selectedExecutive = freeExecutives[randomIndex];
-        order.deliveryPartner = selectedExecutive._id;
-        order.status = 'assigned';
-        selectedExecutive.status = 'busy';
+    for (let order of orders) {
+      let closestPartner = null;
+      let shortestDistance = Infinity;
 
-        await order.save();
-        await selectedExecutive.save();
+      for (let partner of partners) {
+        const distance = haversine(
+          { lat: order.source.latitude, lng: order.source.longitude },
+          { lat: partner.location.latitude, lng: partner.location.longitude }
+        );
 
-        console.log(`Order ${order._id} assigned to ${selectedExecutive.name}`);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          closestPartner = partner;
+        }
       }
-    });
+
+      if (closestPartner) {
+        order.deliveryPartner = closestPartner._id;
+        order.status = 'assigned';
+        await order.save();
+
+        closestPartner.status = 'busy';
+        await closestPartner.save();
+
+        partners.splice(partners.indexOf(closestPartner), 1);
+      }
+    }
   } catch (error) {
-    console.error('Error in assignment job:', error);
+    console.error('Error in assigning orders:', error);
   }
-});
+};
 
-assignmentJob.start();
-
-module.exports = assignmentJob;
+module.exports = {
+  start: () => {
+    setInterval(assignOrders, 60000); // Run the job every 1 minute
+  }
+};
