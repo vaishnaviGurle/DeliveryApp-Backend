@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
-const orderRoutes = require('./routes/orderRoutes');
+const deliveryPartnerRoutes = require('./routes/deliveryPartnersRoutes');
+const orderRoutes = require('./routes/ordersRoutes');
 const orderAssignmentJob = require('./jobs/orderAssignmentJob');
 const config = require('./config');
 

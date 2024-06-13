@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/orderModel');
-const DeliveryPartner = require('../models/deliveryPartnerModel');
+const Order = require('../models/Order');
+const DeliveryPartner = require('../models/DeliveryPartner');
 const haversine = require('haversine-distance');
 
 // Create a new order

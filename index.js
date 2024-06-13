@@ -4,8 +4,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const assignmentJob = require('./orderAssignmentJob'); // Import the cron job
 
-const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
-const orderRoutes = require('./routes/orderRoutes');
+const deliveryPartnerRoutes = require('./routes/deliveryPartnersRoutes');
+const orderRoutes = require('./routes/ordersRoutes');
 
 const app = express();
 
