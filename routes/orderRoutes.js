@@ -1,45 +1,68 @@
+// routes/orderRoutes.js
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const DeliveryPartner = require('../models/DeliveryPartner');
-const haversine = require('haversine-distance');
+
+// Get all orders
+router.get('/', async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching orders' });
+  }
+});
 
 // Create a new order
 router.post('/', async (req, res) => {
-  const order = new Order({
-    source: req.body.source,
-    destination: req.body.destination
-  });
-
+  const { source, destination } = req.body;
   try {
-    const newOrder = await order.save();
-    res.status(201).json(newOrder);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    const newOrder = new Order({
+      source,
+      destination,
+    });
+    const savedOrder = await newOrder.save();
+    res.status(201).json(savedOrder);
+  } catch (err) {
+    res.status(400).json({ message: 'Error creating order' });
   }
 });
 
-// Mark an order as delivered
-router.patch('/:id', async (req, res) => {
+
+
+// Update order status
+router.put('/:id', async (req, res) => {
+  const { status } = req.body;
   try {
-    const order = await Order.findById(req.params.id);
-    if (order) {
-      order.status = 'delivered';
-      await order.save();
-      
-      const deliveryPartner = await DeliveryPartner.findById(order.deliveryPartner);
-      if (deliveryPartner) {
-        deliveryPartner.status = 'free';
-        await deliveryPartner.save();
-      }
-      
-      res.json(order);
-    } else {
-      res.status(404).json({ message: 'Order not found' });
+    const updatedOrder = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating order status', error });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const { status, assignedTo } = req.body;
+    let updateData = { status };
+
+    // Check if assigning order to a delivery partner
+    if (status === 'assigned' && assignedTo) {
+      updateData.assignedTo = assignedTo;
     }
+
+    const updatedOrder = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json(updatedOrder);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Error updating order' });
   }
 });
+
+
 
 module.exports = router;

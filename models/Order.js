@@ -1,16 +1,26 @@
+// models/Order.js
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
   source: {
-    latitude: Number,
-    longitude: Number
+    latitude: String,
+    longitude: String,
   },
   destination: {
-    latitude: Number,
-    longitude: Number
+    latitude: String,
+    longitude: String,
   },
-  status: { type: String, enum: ['unassigned', 'assigned', 'delivered'], default: 'unassigned' },
-  deliveryPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryPartner', default: null }
+  status: {
+    type: String,
+    default: 'unassigned',
+  },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DeliveryPartner',
+    default: null,
+  },
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+const Order = mongoose.model('Order', orderSchema);
+
+module.exports = Order;
